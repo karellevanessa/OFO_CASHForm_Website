@@ -511,16 +511,32 @@ const TAB_KEYS = ['master','reimb','disb','dcb'];
 
 // ── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSV(text) {
-  const lines = text.split('\n'), out = [];
-  for (const line of lines) {
-    const row = []; let cur = '', inQ = false;
-    for (let j = 0; j < line.length; j++) {
-      const ch = line[j];
-      if (ch === '"') { if (inQ && line[j+1]==='"') { cur+='"'; j++; } else inQ=!inQ; }
-      else if (ch===',' && !inQ) { row.push(cur.trim()); cur=''; }
-      else cur+=ch;
+  // RFC 4180 — correctly handles newlines inside quoted cells
+  const out = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (text[i+1] === '"') { cur += '"'; i++; }
+        else inQ = false;
+      } else {
+        cur += ch;
+      }
+    } else {
+      if      (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(cur.trim()); cur = ''; }
+      else if (ch === '\r') { /* skip */ }
+      else if (ch === '\n') {
+        row.push(cur.trim());
+        if (row.some(c => c !== '')) out.push(row);
+        row = []; cur = '';
+      } else { cur += ch; }
     }
-    row.push(cur.trim()); out.push(row);
+  }
+  if (cur.length || row.length) {
+    row.push(cur.trim());
+    if (row.some(c => c !== '')) out.push(row);
   }
   return out;
 }
@@ -880,7 +896,7 @@ function detail(gi, tabIdx) {
       <div class="di"><div class="dl">Status</div><div class="dv">${badge(r.s)}</div></div>
       <div class="di"><div class="dl">Request Type</div><div class="dv">${typeB(r.t)} <span style="font-size:12px;margin-left:6px">${esc(r.t)}</span></div></div>
       ${r.saps?`<div class="di"><div class="dl">SAPS Number</div><div class="dv saps">${esc(r.saps)}</div></div>`:'<div class="di"></div>'}
-      ${r.orig?`<div class="di"><div class="dl">Originator</div><div class="dv">${esc(r.orig)}</div></div>`:'<div class="di"></div>'}
+      
       <div class="di"><div class="dl">Date Filed</div><div class="dv" style="font-family:'Space Mono',monospace;font-size:12px">${esc(r.ts)||'—'}</div></div>
       <div class="di"><div class="dl">Project Period</div><div class="dv" style="font-family:'Space Mono',monospace;font-size:11px">${esc(r.ps)||'—'} → ${esc(r.pe)||'—'}</div></div>
     </div>
