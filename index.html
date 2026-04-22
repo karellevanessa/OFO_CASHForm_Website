@@ -222,12 +222,13 @@ tbody tr:hover{background:var(--em7);cursor:pointer;}
 td{padding:11px 14px;vertical-align:middle;color:var(--text);font-weight:500;}
 td.amt{
   font-family:'Space Mono',monospace;font-size:11px;
-  color:var(--em1);font-weight:700;white-space:nowrap;
+  color:var(--em1);font-weight:700;white-space:nowrap;width:110px;
 }
-td.dt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink4);white-space:nowrap;}
-td.mono{font-family:'Space Mono',monospace;font-size:10px;color:var(--em2);font-weight:700;white-space:nowrap;}
+td.dt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink4);white-space:nowrap;width:130px;}
+td.mono{font-family:'Space Mono',monospace;font-size:10px;color:var(--em2);font-weight:700;white-space:nowrap;width:110px;}
 td.tr{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
-td.orig{font-size:11px;color:var(--ink4);font-style:italic;}
+td.orig{font-size:11px;color:var(--ink4);font-style:italic;width:110px;}
+td.stat{width:130px;white-space:nowrap;}
 
 /* ── Status Badges ── */
 .b{
@@ -617,13 +618,31 @@ async function tryFetch(url) {
   return null;
 }
 
+function parseDate(ts) {
+  if (!ts) return 0;
+  // Handle formats: M/D/YYYY, M/D/YYYY H:MM:SS, MM/DD/YYYY, YYYY-MM-DD
+  const d = new Date(ts);
+  if (!isNaN(d)) return d.getTime();
+  // Try M/D/YYYY H:MM:SS
+  const parts = ts.match(/(\d+)\/(\d+)\/(\d+)(?:\s+(\d+):(\d+)(?::(\d+))?)?/);
+  if (parts) {
+    const [,m,d2,y,h=0,min=0,s=0] = parts;
+    return new Date(+y, +m-1, +d2, +h, +min, +s).getTime();
+  }
+  return 0;
+}
+
+function sortLatestFirst(rows) {
+  return [...rows].sort((a, b) => parseDate(b.ts) - parseDate(a.ts));
+}
+
 async function fetchTab(key, url, parser) {
   const text = await tryFetch(url);
   if (!text) return false;
   const rows = parseCSV(text);
   const parsed = parser(rows);
   if (!parsed) return false;
-  DATA[key] = parsed;
+  DATA[key] = sortLatestFirst(parsed);
   return true;
 }
 
@@ -665,6 +684,15 @@ async function refreshAll() {
 }
 
 // ── UI Helpers ────────────────────────────────────────────────────────────────
+function formatAmt(a) {
+  if (!a) return '—';
+  // Strip currency symbols, spaces, commas
+  const clean = String(a).replace(/[₱PHP,\s]/gi, '').trim();
+  const num = parseFloat(clean);
+  if (isNaN(num)) return a; // return original if unparseable
+  return '₱ ' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function tr(s,n) { return s&&s.length>n?s.slice(0,n)+'…':(s||'—'); }
 
@@ -790,42 +818,42 @@ function render(tabIdx) {
     const orig = r.orig ? `<span style="font-size:11px;color:var(--ink3);font-style:italic">${esc(r.orig)}</span>` : '—';
 
     if (tabIdx===0) html += `<tr onclick="detail(${gi},0)">
-      <td>${badge(r.s)}</td><td class="dt">${esc(r.ts)||'—'}</td>
+      <td class="stat">${badge(r.s)}</td><td class="dt">${esc(r.ts)||'—'}</td>
       <td class="tr" title="${esc(r.n)}">${esc(tr(r.n,22))}</td>
       <td class="tr" title="${esc(r.o)}">${esc(tr(r.o,26))}</td>
       <td class="tr" title="${esc(r.p)}">${esc(tr(r.p,22))}</td>
       <td class="tr" title="${esc(r.d)}">${esc(tr(r.d,28))}</td>
-      <td class="amt">${esc(r.a)||'—'}</td>
+      <td class="amt">${formatAmt(r.a)}</td>
       <td>${typeB(r.t)}</td>
     </tr>`;
     else if (tabIdx===1) html += `<tr onclick="detail(${gi},1)">
-      <td>${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
+      <td class="stat">${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
       <td class="tr" title="${esc(r.n)}">${esc(tr(r.n,22))}</td>
       <td class="tr" title="${esc(r.o)}">${esc(tr(r.o,24))}</td>
       <td class="tr" title="${esc(r.p)}">${esc(tr(r.p,20))}</td>
       <td class="tr" title="${esc(r.d)}">${esc(tr(r.d,26))}</td>
-      <td class="amt">${esc(r.a)||'—'}</td>
+      <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.sup)}">${esc(tr(r.sup,18))||'—'}</td>
       <td class="orig">${esc(r.orig)||'—'}</td>
     </tr>`;
     else if (tabIdx===2) html += `<tr onclick="detail(${gi},2)">
-      <td>${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
+      <td class="stat">${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
       <td class="tr" title="${esc(r.n)}">${esc(tr(r.n,22))}</td>
       <td class="tr" title="${esc(r.o)}">${esc(tr(r.o,24))}</td>
       <td class="tr" title="${esc(r.p)}">${esc(tr(r.p,20))}</td>
       <td class="tr" title="${esc(r.d)}">${esc(tr(r.d,26))}</td>
-      <td class="amt">${esc(r.a)||'—'}</td>
+      <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.sup)}">${esc(tr(r.sup,18))||'—'}</td>
       <td>${accB(r.acc)}</td>
       <td class="orig">${esc(r.orig)||'—'}</td>
     </tr>`;
     else html += `<tr onclick="detail(${gi},3)">
-      <td>${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
+      <td class="stat">${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
       <td class="tr" title="${esc(r.n)}">${esc(tr(r.n,22))}</td>
       <td class="tr" title="${esc(r.o)}">${esc(tr(r.o,24))}</td>
       <td class="tr" title="${esc(r.p)}">${esc(tr(r.p,20))}</td>
       <td class="tr" title="${esc(r.d)}">${esc(tr(r.d,26))}</td>
-      <td class="amt">${esc(r.a)||'—'}</td>
+      <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.rd)}">${esc(tr(r.rd,20))||'—'}</td>
       <td style="font-family:'Space Mono',monospace;font-size:10px">${esc(r.dcb)||'—'}</td>
       <td class="orig">${esc(r.orig)||'—'}</td>
@@ -851,7 +879,7 @@ function detail(gi, tabIdx) {
   document.getElementById('mc').innerHTML = `
     <div class="md-title">${esc(r.p)||'Untitled Request'}</div>
     <div class="dg">
-      <div class="di full"><div class="dl">Amount</div><div class="dv big">${esc(r.a)||'—'}</div></div>
+      <div class="di full"><div class="dl">Amount</div><div class="dv big">${formatAmt(r.a)}</div></div>
       <div class="di"><div class="dl">Status</div><div class="dv">${badge(r.s)}</div></div>
       <div class="di"><div class="dl">Request Type</div><div class="dv">${typeB(r.t)} <span style="font-size:12px;margin-left:6px">${esc(r.t)}</span></div></div>
       ${r.saps?`<div class="di"><div class="dl">SAPS Number</div><div class="dv saps">${esc(r.saps)}</div></div>`:'<div class="di"></div>'}
@@ -885,6 +913,8 @@ function showToast(msg,type) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// Sort fallback data latest-first before first render
+for (const key of TAB_KEYS) DATA[key] = sortLatestFirst(DATA[key]);
 updateAll();
 refreshAll();
 </script>
