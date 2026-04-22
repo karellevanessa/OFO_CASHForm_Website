@@ -227,7 +227,7 @@ td.amt{
 td.dt{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink4);white-space:nowrap;width:130px;}
 td.mono{font-family:'Space Mono',monospace;font-size:10px;color:var(--em2);font-weight:700;white-space:nowrap;width:120px;max-width:120px;}
 td.tr{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;}
-td.orig{font-size:11px;color:var(--ink4);font-style:italic;width:110px;}
+
 td.stat{width:130px;white-space:nowrap;}
 
 /* ── Status Badges ── */
@@ -436,7 +436,7 @@ td.stat{width:130px;white-space:nowrap;}
       <div class="chip" id="cnt1">— entries</div>
     </div>
     <div class="tbl-w"><div class="tbl-s"><table>
-      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Payee</th><th>Originator</th></tr></thead>
+      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Payee</th></tr></thead>
       <tbody id="tb1"></tbody>
     </table></div></div>
   </div>
@@ -454,7 +454,7 @@ td.stat{width:130px;white-space:nowrap;}
       <div class="chip" id="cnt2">— entries</div>
     </div>
     <div class="tbl-w"><div class="tbl-s"><table>
-      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Supplier</th><th>Accredited?</th><th>Originator</th></tr></thead>
+      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Supplier</th><th>Accredited?</th></tr></thead>
       <tbody id="tb2"></tbody>
     </table></div></div>
   </div>
@@ -472,7 +472,7 @@ td.stat{width:130px;white-space:nowrap;}
       <div class="chip" id="cnt3">— entries</div>
     </div>
     <div class="tbl-w"><div class="tbl-s"><table>
-      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Receiving Org</th><th>Originator</th></tr></thead>
+      <thead><tr><th>Status</th><th>SAPS #</th><th>Date</th><th>Full Name</th><th>Office / Cluster</th><th>Project</th><th>Description</th><th>Amount</th><th>Receiving Org</th></tr></thead>
       <tbody id="tb3"></tbody>
     </table></div></div>
   </div>
@@ -834,7 +834,6 @@ function render(tabIdx) {
       <td class="tr" title="${esc(r.d)}">${esc(tr(r.d,26))}</td>
       <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.sup)}">${esc(tr(r.sup,18))||'—'}</td>
-      <td class="orig">${esc(r.orig)||'—'}</td>
     </tr>`;
     else if (tabIdx===2) html += `<tr onclick="detail(${gi},2)">
       <td class="stat">${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
@@ -845,7 +844,6 @@ function render(tabIdx) {
       <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.sup)}">${esc(tr(r.sup,18))||'—'}</td>
       <td>${accB(r.acc)}</td>
-      <td class="orig">${esc(r.orig)||'—'}</td>
     </tr>`;
     else html += `<tr onclick="detail(${gi},3)">
       <td class="stat">${badge(r.s)}</td><td class="mono">${esc(r.saps)||'—'}</td><td class="dt">${esc(r.ts)||'—'}</td>
@@ -856,7 +854,6 @@ function render(tabIdx) {
       <td class="amt">${formatAmt(r.a)}</td>
       <td class="tr" title="${esc(r.rd)}">${esc(tr(r.rd,20))||'—'}</td>
       <td style="font-family:'Space Mono',monospace;font-size:10px">${esc(r.dcb)||'—'}</td>
-      <td class="orig">${esc(r.orig)||'—'}</td>
     </tr>`;
   });
   tb.innerHTML = html;
